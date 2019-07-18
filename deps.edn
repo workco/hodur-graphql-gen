@@ -1,8 +1,9 @@
 {:paths ["src"]
 
  :deps
- {datascript          {:mvn/version "0.18.3"}
-  hodur/engine        {:mvn/version "0.1.6"}
+ {datascript          {:mvn/version "0.17.1"}
+  workco/hodur-engine {:git/url "https://github.com/workco/hodur-engine.git"
+                       :sha "b58548c711214665b7c89bffc10028aad5451b63"}
   org.clojure/clojure {:mvn/version "1.10.0"}}
 
  :aliases
