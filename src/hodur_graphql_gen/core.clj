@@ -27,20 +27,23 @@
 
 (defn ^:private generate-fragment-field [meta-db field]
   (let [field-name (:field/name field)
+        ignore-field? (:field/ignore-test-query field)
         field-type (or (:field/type field)
                        (loaders/resolve-by-name meta-db field-name))]
-    (if (or (= (:type/nature field-type) :primitive)
-            (:type/enum field-type))
-      (str field-name (generate-arguments field))
-      (str field-name (generate-arguments field)
-           " { "
-           "..." (frag-name field-type)
-           " }"))))
+    (when-not ignore-field?
+      (if (or (= (:type/nature field-type) :primitive)
+              (:type/enum field-type))
+        (str field-name (generate-arguments field))
+        (str field-name (generate-arguments field)
+             " { "
+             "..." (frag-name field-type)
+             " }")))))
 
 (defn ^:private generate-fragment [meta-db type]
   (let [fields (->> (:field/_parent type)
                     (filter :lacinia/tag)
-                    (map (partial generate-fragment-field meta-db)))]
+                    (map (partial generate-fragment-field meta-db))
+                    (remove nil?))]
     (str "fragment " (frag-name type) " on " (:type/name type)
          " { "
          (if (empty? fields)
@@ -138,7 +141,8 @@
                           (map generate-params-for-field)
                           (concat (generate-params-query user-types))
                           flatten
-                          (string/join ", "))]
+                          (string/join ", "))
+          _ (clojure.pprint/pprint query-args)]
       (str "query "
            (when-not (empty? query-args)
              (str "(" query-args ")"))
@@ -258,6 +262,7 @@
                    [^UserType
                     findUser [^String namePattern]
                     ^{:type RegularUser
+                      :ignore-test-query true
                       :cardinality [0 n]}
                     findUsers [^{:type String
                                  :cardinality [0 n]} namePatternList
